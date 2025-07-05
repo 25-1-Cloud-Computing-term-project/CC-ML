@@ -68,16 +68,27 @@ async def ask_question(session, question):
         return None
 
 async def main():
+    start_all = time.perf_counter()  # ⏱ 전체 시작 시간
+
     async with httpx.AsyncClient() as client:
         tasks = [ask_question(client, q) for q in questions]
         latencies = await asyncio.gather(*tasks)
-        valid = [l for l in latencies if l is not None]
-        if valid:
-            avg = round(sum(valid) / len(valid), 2)
-            summary = f"\n 평균 응답 시간: {avg}초 (성공 {len(valid)} / {len(questions)}개)"
-        else:
-            summary = "\n 모든 요청 실패"
-        log_to_file(summary)
+
+    end_all = time.perf_counter()  # ⏱ 전체 종료 시간
+    total_time = round(end_all - start_all, 2)
+
+    valid = [l for l in latencies if l is not None]
+    if valid:
+        avg = round(sum(valid) / len(valid), 2)
+        summary = (
+            f"\n 평균 응답 시간: {avg}초 (성공 {len(valid)} / {len(questions)}개)\n"
+            f" 총 소요 시간: {total_time}초"
+        )
+    else:
+        summary = f"\n 모든 요청 실패\n 총 소요 시간: {total_time}초"
+
+    log_to_file(summary)
+
 
 if __name__ == "__main__":
     asyncio.run(main())
